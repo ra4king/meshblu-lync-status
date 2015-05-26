@@ -1,0 +1,7 @@
+bin/
+obj/
+*.dat
+*.json
+auth
+*.suo
+
