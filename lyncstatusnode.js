@@ -18,10 +18,18 @@ conn.on('ready', function(data) {
 	console.log("UUID AUTHENTICATED!");
 	console.log(data);
 
-	connect_to_lync();
+	if(!lync_user)
+		connect_to_lync();
 });
 
+var count = 0;
 conn.on('message', function(message) {
+	process.stdout.write('.');
+
+	if((count = (count + 1) % 75) == 0) {
+		process.stdout.write('\n');
+	}
+
 	if(lync_user) {
 		lync_user.getAvailability(function(err, availability) {
 			if(err)
@@ -41,10 +49,8 @@ conn.on('message', function(message) {
 
 function connect_to_lync() {
 	lync_auth(config, function(err, lync_user_obj) {
-		if(err) {
-			console.log(err);
-			return;
-		}
+		if(err)
+			return console.log(err);
 		
 		lync_user = lync_user_obj;
 	});
