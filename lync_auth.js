@@ -322,12 +322,12 @@ module.exports = function(config, callback) {
 
 	function something_went_wrong(info) {
 		return function(msg) {
-			console.log("Something went wrong with " + info);
+			console.log("Something went wrong with", info);
 			
 			if(msg.statusCode != undefined) {
-				console.log("Status code: ", msg.statusCode);
-				console.log("Status message: ", msg.statusMessage);
-				console.log("Headers: ", JSON.stringify(msg.headers));
+				console.log("Status code:", msg.statusCode);
+				console.log("Status message:", msg.statusMessage);
+				console.log("Headers:", JSON.stringify(msg.headers));
 			}
 			else {
 				console.log(msg);

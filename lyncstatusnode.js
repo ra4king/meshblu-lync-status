@@ -18,21 +18,14 @@ conn.on('ready', function(data) {
 	console.log("UUID AUTHENTICATED!");
 	console.log(data);
 
-	lync_auth(config, function(err, lync_user_obj) {
-		if(err) {
-			console.log(err);
-			return;
-		}
-		
-		lync_user = lync_user_obj;
-	});
+	connect_to_lync();
 });
 
 conn.on('message', function(message) {
 	if(lync_user) {
 		lync_user.getAvailability(function(err, availability) {
 			if(err)
-				console.log(err);
+				return connect_to_lync();
 			
 			conn.message('*', {
 				"presence": err ? "unknown" : availability
@@ -45,3 +38,14 @@ conn.on('message', function(message) {
 		});
 	}
 });
+
+function connect_to_lync() {
+	lync_auth(config, function(err, lync_user_obj) {
+		if(err) {
+			console.log(err);
+			return;
+		}
+		
+		lync_user = lync_user_obj;
+	});
+}
