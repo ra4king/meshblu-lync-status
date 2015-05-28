@@ -99,10 +99,8 @@ module.exports = function(config, callback) {
 				}
 			});
 		}).then(function(auth) {
-			return new Promise(function(resolve, reject) {
-				authorization = auth;
-				resolve(auth);
-			});
+			authorization = auth;
+			return auth;
 		}, function(err) {
 			return authenticate(auth_url);
 		});
@@ -297,7 +295,7 @@ module.exports = function(config, callback) {
 				}).end("grant_type=password&username=" + result.username + "&password=" + result.password);
 			});
 		}).then(function(auth) {
-			console.log("Authentication successul.");
+			console.log("Authentication successful.");
 			
 			return new Promise(function(resolve, reject) {
 				var fs = require('fs');

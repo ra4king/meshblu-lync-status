@@ -31,7 +31,9 @@ conn.on('ready', function(data) {
 conn.on('message', function(message) {
 	if(lync_user) {
 		lync_user.getAvailability(function(err, availability) {
-			console.log(availability);
+			if(err)
+				console.log(err);
+			
 			conn.message('*', {
 				"presence": err ? "unknown" : availability
 			});
