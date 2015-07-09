@@ -4,7 +4,7 @@ var meshblu = require('meshblu');
 var async = require('async');
 var config = require('./config.json');
 var meshblu_config = require('./meshblu.json');
-var lync_auth = require('./lync_auth.js');
+var lync_auth = require('./lyncAuth.js');
 
 var lync_user = undefined;
 
@@ -33,7 +33,8 @@ conn.on('message', function(message) {
       lync_user.setLocation(message.params.setLocation, function(err) {
         if(err && lync_user) {
           lync_user = undefined;
-          return connect_to_lync();
+          connect_to_lync();
+          return;
         }
       });
     }
@@ -41,36 +42,38 @@ conn.on('message', function(message) {
       lync_user.setNote(message.params.setNote, function(err) {
         if(err && lync_user) {
           lync_user = undefined;
-          return connect_to_lync();
+          connect_to_lync();
+          return;
         }
       });
     }
     else {
       async.parallel([
-        function(callback) { lync_user.getAvailability(callback); },
-        function(callback) { lync_user.getLocation(callback); },
-        function(callback) { lync_user.getNote(callback); }
-      ],
-      function(err, results) {
-        if(err) {
-          if(lync_user) {
-            lync_user = undefined;
-            connect_to_lync();
+          function(callback) { lync_user.getAvailability(callback); },
+          function(callback) { lync_user.getLocation(callback); },
+          function(callback) { lync_user.getNote(callback); }
+        ],
+        function(err, results) {
+          if(err) {
+            if(lync_user) {
+              lync_user = undefined;
+              connect_to_lync();
+            }
+
+            conn.message('*', {
+              'error': err
+            });
+
+            return;
           }
 
           conn.message('*', {
-            'error': err
+            'presence': results[0],
+            'location': results[1],
+            'note': results[2]
           });
-
-          return;
         }
-
-        conn.message('*', {
-          'presence': results[0],
-          'location': results[1],
-          'note': results[2]
-        });
-      });
+      );
 
       process.stdout.write('.');
 
@@ -81,7 +84,7 @@ conn.on('message', function(message) {
   }
   else {
     conn.message('*', {
-      'presence': 'unknown'
+      'error': 'not connected to lync'
     });
   }
 });
@@ -89,8 +92,9 @@ conn.on('message', function(message) {
 function connect_to_lync() {
   lync_auth(config, function(err, lync_user_obj) {
     if(err)
-      return console.log(err);
+      return console.error(err);
     
     lync_user = lync_user_obj;
+    console.log('Connected to lync.');
   });
 }

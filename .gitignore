@@ -1,7 +1,4 @@
-bin/
-obj/
-*.dat
-*.json
+node_modules/
+meshblu.json
+config.json
 auth
-*.suo
-
