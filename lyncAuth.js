@@ -5,7 +5,6 @@ module.exports = function(config, callback) {
   var url = require('url');
   var fs = require('fs')
   var promise = require('promise');
-  var prompt = require('prompt');
 
   var lync_user = require('./lyncUser');
 
@@ -119,11 +118,21 @@ module.exports = function(config, callback) {
 
   function authenticate(auth_url) {
     return new Promise(function(resolve, reject) {
-      prompt.start();
-      prompt.get([{name: 'username'},{name: 'password',hidden: true}], function(err, result) {
-        if(err)
-          return reject(null);
+      var options = {
+        'name': 'Lync Status Plugin',
+        'properties': {
+          'username': {
+            'name': 'Username:',
+            'type': 'text'
+          },
+          'password': {
+            'name': 'Password:',
+            'type': 'password'
+          }
+        }
+      };
 
+      var configServer = require('./configServer')(options, function(values, callback) {
         var url_parts = url.parse(auth_url);
 
         var request_properties = {
@@ -140,8 +149,10 @@ module.exports = function(config, callback) {
         };
 
         https.request(request_properties, function(res) {
-          if(res.statusCode != 200)
-            return reject('Invalid credentials.');
+          if(res.statusCode != 200) {
+            callback('Invalid credentials.');
+            return;
+          }
 
           var all_data = '';
 
@@ -150,12 +161,14 @@ module.exports = function(config, callback) {
           });
           
           res.on('end', function() {
+            callback();
+
             var auth = JSON.parse(all_data.toString());
             authorization = auth.token_type + ' ' + auth.access_token;
             var expires = auth.expires_in;
             resolve({auth: authorization, expires: expires});
           });
-        }).end('grant_type=password&username=' + result.username + '&password=' + result.password);
+        }).end('grant_type=password&username=' + values.username + '&password=' + values.password);
       });
     }).then(function(auth) {
       console.log('Authentication successful.');
@@ -178,14 +191,7 @@ module.exports = function(config, callback) {
         console.error('Error writing auth file: ' + err);
         return getApplicationsURL();
       });
-    }, function(reject) {
-      if(!reject) {
-        throw null;
-      }
-
-      console.log(reject);
-      return authenticate(auth_url);
-    });
+    }, something_went_wrong('authenticate'));
   }
 
   function getApplicationsURL() {
