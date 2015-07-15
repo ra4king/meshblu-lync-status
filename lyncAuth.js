@@ -117,9 +117,21 @@ module.exports = function(config, callback) {
   }
 
   function authenticate(auth_url) {
+    try {
+      console.log('before');
+      var wincredmgr = require('./node_modules/wincredmgr/build/Release/credentialModule');
+      console.log('after');
+    } catch(e) {
+      console.error(e);
+      throw e;
+    }
+
     return new Promise(function(resolve, reject) {
+      var port = 80;
+
       var options = {
         'name': 'Lync Status Plugin',
+        'port': port,
         'properties': {
           'username': {
             'name': 'Username:',
@@ -170,6 +182,8 @@ module.exports = function(config, callback) {
           });
         }).end('grant_type=password&username=' + values.username + '&password=' + values.password);
       });
+
+      require('open')('http://localhost:' + port);
     }).then(function(auth) {
       console.log('Authentication successful.');
       

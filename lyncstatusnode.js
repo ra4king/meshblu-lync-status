@@ -89,12 +89,22 @@ conn.on('message', function(message) {
   }
 });
 
+var connecting = false;
+
 function connect_to_lync() {
+  if(connecting) return;
+
+  connecting = true
   lync_auth(config, function(err, lync_user_obj) {
-    if(err)
-      return console.error(err);
+    if(err) {
+      console.error(err);
+      connecting = false;
+      return;
+    }
     
     lync_user = lync_user_obj;
     console.log('Connected to lync.');
+
+    connecting = false;
   });
 }

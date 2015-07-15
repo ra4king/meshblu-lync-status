@@ -29,7 +29,11 @@ module.exports = function(options, callback) {
 
     var title = (options.name || '') + ' Configuration';
 
-    var body = '<!DOCTYPE html><html><head><title>' + title + '</title></head>';
+    var body = '<!DOCTYPE html><html><head><title>' + title + '</title>';
+
+    body += '<style type="text/css">body { text-align: center; font-family: sans-serif } .input { padding: 3 }</style>';
+
+    body += '</head>';
     body += '<body><h1>' + title + '</h1>';
 
     if(status)
@@ -38,10 +42,10 @@ module.exports = function(options, callback) {
     body += '<form method="POST">';
     for(var property in options.properties) {
       var opts = options.properties[property];
-      body += (opts.name || property) + ' <input type="' + opts.type + '" name="' + property + '" value="' +
-              (values[property] || opts['default'] || '') + '" /><br/>';
+      body += '<div class="input">' + (opts.name || property) + ' <input type="' + opts.type + '" name="' + property + '" value="' +
+              (values[property] || opts['default'] || '') + '" /></div><br/>';
     }
-    body += '<input type="submit" value="Submit" />';
+    body += '<div class="input"><input type="submit" value="Submit" /></div>';
     body += '</form></body></html>';
     return body;
   }
