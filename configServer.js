@@ -7,7 +7,7 @@ options: {
       'propertyName': {
         'name': OPTIONAL name to show before input, otherwise propertyName is used
         'type': the HTML form input type
-        'default': OPTIONAL default value of property
+        'value': OPTIONAL value of property
       },
       ...
     ]
@@ -43,7 +43,7 @@ module.exports = function(options, callback) {
     for(var property in options.properties) {
       var opts = options.properties[property];
       body += '<div class="input">' + (opts.name || property) + ' <input type="' + opts.type + '" name="' + property + '" value="' +
-              (values[property] || opts['default'] || '') + '" /></div><br/>';
+              (values[property] || opts.value || '') + '" /></div><br/>';
     }
     body += '<div class="input"><input type="submit" value="Submit" /></div>';
     body += '</form></body></html>';

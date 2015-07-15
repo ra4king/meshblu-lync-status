@@ -117,14 +117,14 @@ module.exports = function(config, callback) {
   }
 
   function authenticate(auth_url) {
-    try {
-      console.log('before');
-      var wincredmgr = require('./node_modules/wincredmgr/build/Release/credentialModule');
-      console.log('after');
-    } catch(e) {
-      console.error(e);
-      throw e;
-    }
+    // try {
+    //   console.log('before');
+    //   var wincredmgr = require('./node_modules/wincredmgr/build/Release/credentialModule');
+    //   console.log('after');
+    // } catch(e) {
+    //   console.error(e);
+    //   throw e;
+    // }
 
     return new Promise(function(resolve, reject) {
       var port = 80;
