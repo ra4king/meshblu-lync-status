@@ -28,7 +28,7 @@ install:
   - if "%PLATFORM%" == "x86" SET NODE_PLATFORM="ia32"
   - if NOT "%APPVEYOR_REPO_TAG_NAME%" == "" npm install -g node-pre-compile-to-s3
   - if NOT "%APPVEYOR_REPO_TAG_NAME%" == "" node-pre-compile-to-s3 precompile -p "%APPVEYOR_BUILD_FOLDER%\build" "%APPVEYOR_BUILD_FOLDER%\package.json"
-  - if NOT "%APPVEYOR_REPO_TAG_NAME%" == "" node-pre-compile-to-s3 upload -r "npm/lync-status-blu/%PACKAGE_VERSION%" -b octoblu-cdn "%APPVEYOR_BUILD_FOLDER%\build\lync-status-blu-%PACKAGE_VERSION%-win32-%NODE_PLATFORM%-node-modules.tar.gz"
+  - if NOT "%APPVEYOR_REPO_TAG_NAME%" == "" node-pre-compile-to-s3 upload -r "npm/meshblu-lync-status/%PACKAGE_VERSION%" -b octoblu-cdn "%APPVEYOR_BUILD_FOLDER%\build\meshblu-lync-status-%PACKAGE_VERSION%-win32-%NODE_PLATFORM%-node-modules.tar.gz"
 
 build: off
 test: off

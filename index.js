@@ -2,7 +2,7 @@
 var util = require('util');
 var async = require('async');
 var EventEmitter = require('events').EventEmitter;
-var debug = require('debug')('lync-status-blu')
+var debug = require('debug')('meshblu-lync-status')
 
 var MESSAGE_SCHEMA = {
   type: 'object',

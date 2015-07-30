@@ -1,7 +1,7 @@
 {
-  "name": "lync-status-blu",
+  "name": "meshblu-lync-status",
   "description": "Get and set Lync status",
-  "repository": "ra4king/lync-status-blu",
+  "repository": "ra4king/meshblu-lync-status",
   "version": "1.0.0",
   "main": "connector.js",
   "scripts": {
