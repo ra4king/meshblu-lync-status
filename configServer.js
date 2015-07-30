@@ -1,3 +1,5 @@
+'use strict';
+
 /*
 options: {
   'name': name to be displayed in title and header

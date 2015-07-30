@@ -41,7 +41,11 @@ Plugin.prototype.onMessage = function(message){
   var self = this;
 
   if(this.lync_user) {
+    var getStatus = true;
+
     if(payload.location) {
+      getStatus = false;
+
       self.lync_user.setLocation(payload.location, function(err) {
         if(err) {
           self.lync_user = undefined;
@@ -65,7 +69,10 @@ Plugin.prototype.onMessage = function(message){
         });
       });
     }
-    else if(payload.note) {
+
+    if(payload.note) {
+      getStatus = false;
+
       self.lync_user.setNote(payload.note, function(err) {
         if(err) {
           self.lync_user = undefined;
@@ -89,7 +96,8 @@ Plugin.prototype.onMessage = function(message){
         });
       });
     }
-    else {
+
+    if(getStatus) {
       async.parallel([
           function(callback) { callback(undefined, self.lync_user.getName()); },
           function(callback) { self.lync_user.getAvailability(callback); },

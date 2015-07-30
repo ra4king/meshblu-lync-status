@@ -1,6 +1,6 @@
 {
   "name": "meshblu-lync-status",
-  "description": "Get and set Lync status",
+  "description": "Lync connector for Octoblu",
   "repository": "ra4king/meshblu-lync-status",
   "version": "1.0.0",
   "main": "connector.js",
