@@ -1,0 +1,30 @@
+{
+  "name": "lync-status-blu",
+  "description": "Get and set Lync status",
+  "repository": "ra4king/lync-status-blu",
+  "version": "1.0.0",
+  "main": "connector.js",
+  "scripts": {
+    "preinstall": "node -e \"try{require('./skip-install.js')}catch(e){}\"",
+    "start": "node command.js",
+    "test": "exit 0"
+  },
+  "dependencies": {
+    "async": "^1.4.0",
+    "debug": "^2.1.0",
+    "meshblu": "^1.22.0",
+    "open": "0.0.5",
+    "promise": "^7.0.3",
+    "uuid": "^2.0.1",
+    "wincredmgr": "^2.0.0"
+  },
+  "bundledDependencies": [
+    "request",
+    "tar",
+    "fstream"
+  ],
+  "keywords": [
+    "meshblu-connector",
+    "gateblu"
+  ]
+}

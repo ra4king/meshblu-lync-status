@@ -1,10 +1,11 @@
 'use strict';
 
-module.exports = function(config, callback) {
+module.exports = function(callback) {
   var https = require('https');
   var url = require('url');
   var fs = require('fs')
   var promise = require('promise');
+  var wincredmgr = require('wincredmgr');
 
   var lync_user = require('./lyncUser');
 
@@ -12,46 +13,68 @@ module.exports = function(config, callback) {
   var xframe_url;
   var authorization;
 
-  // check if auth file exists
-  new Promise(function(resolve, reject) {
-    fs.exists('./auth', function(exists) {
-      if(exists) {
-        fs.readFile('./auth', function(err, data) {
-          if (err) return reject(err);
+  var credentials;
+  var configCallback;
 
-          var auth = JSON.parse(data.toString());
+  function setupConfigServer(message) {
+    var port = 80;
 
-          // expires is in seconds, timestamp/Date.now() is in milliseconds
-          if(auth.timestamp + auth.expires * 1000 <= Date.now()) {
-            console.log('auth has expired...');
-            resetAuth();
-            reject(null);
-          }
-          else resolve(auth.auth);
-        });
+    var options = {
+      'name': 'Lync Status Plugin',
+      'status': message,
+      'port': port,
+      'properties': {
+        'domain': {
+          'name': 'Domain',
+          'type': 'text'
+        },
+        'username': {
+          'name': 'Username:',
+          'type': 'text'
+        },
+        'password': {
+          'name': 'Password:',
+          'type': 'password'
+        }
       }
-      else {
-        reject(null);
+    };
+
+    require('./configServer')(options, function(values, callback) {
+      if(values.domain.indexOf('/') != -1) {
+        callback('Domain cannot have a forward slash: /');
+        return;
       }
+
+      credentials = values;
+      configCallback = callback;
+      lyncDiscover();
     });
-  }).then(function(auth) {
-    console.log('Found existing auth.');
+    require('open')('http://localhost:' + port);
+  }
 
-    authorization = auth;
-    return lyncDiscover();
-  }, function() {
-    return lyncDiscover();
-  });
+  try {
+    credentials = wincredmgr.ReadCredentials('LyncStatusPluginCreds');
+
+    var slash = credentials.username.indexOf('/');
+    if(slash == -1)
+      throw 'something went badly wrong';
+
+    credentials.domain = credentials.username.substring(0, slash);
+    credentials.username = credentials.username.substring(slash + 1);
+
+    configCallback = function(err) {
+      if(err)
+        setupConfigServer(err);
+    };
+
+    lyncDiscover();
+  } catch(e) {
+    setupConfigServer();
+  }
 
   function lyncDiscover() {
     return new Promise(function(resolve, reject) {
-      if(config.user_url) {
-        xframe_url = config.xframe_url;
-        user_url = config.user_url;
-        return resolve(config.user_url);
-      }
-
-      var host = 'lyncdiscoverinternal.' + config.domain;
+      var host = 'lyncdiscoverinternal.' + credentials.domain;
       var request_properties = {
         hostname: host,
         headers: {
@@ -80,7 +103,9 @@ module.exports = function(config, callback) {
         return getApplicationsURL();
       else
         return getAuthURL();
-    }, something_went_wrong('lync discover'));
+    }, function() {
+      configCallback('Domain not found.');
+    });
   }
 
   function getAuthURL() {
@@ -100,8 +125,10 @@ module.exports = function(config, callback) {
       https.request(request_properties, function(res) {
         if(res.statusCode != 401)
           return reject(res);
-        
-        var parts = res.headers['www-authenticate'].split(',');
+
+        var authHeader = res.headers['www-authenticate'] || res.headers['WWW-Authenticate'];
+
+        var parts = authHeader.split(',');
         for(var i = 0; i < parts.length; i++) {
           var part = parts[i];
           if (part.indexOf('MsRtcOAuth') != -1) {
@@ -117,101 +144,55 @@ module.exports = function(config, callback) {
   }
 
   function authenticate(auth_url) {
-    // try {
-    //   console.log('before');
-    //   var wincredmgr = require('./node_modules/wincredmgr/build/Release/credentialModule');
-    //   console.log('after');
-    // } catch(e) {
-    //   console.error(e);
-    //   throw e;
-    // }
-
     return new Promise(function(resolve, reject) {
-      var port = 80;
+      var url_parts = url.parse(auth_url);
 
-      var options = {
-        'name': 'Lync Status Plugin',
-        'port': port,
-        'properties': {
-          'username': {
-            'name': 'Username:',
-            'type': 'text'
-          },
-          'password': {
-            'name': 'Password:',
-            'type': 'password'
-          }
+      var request_properties = {
+        hostname: url_parts.hostname,
+        path: url_parts.pathname,
+        method: 'POST',
+        headers: {
+          'Host': url_parts.hostname,
+          'Accept': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+          'Referer': xframe_url,
+          'Cache-Control': 'no-cache'
         }
       };
 
-      var configServer = require('./configServer')(options, function(values, callback) {
-        var url_parts = url.parse(auth_url);
+      https.request(request_properties, function(res) {
+        if(res.statusCode != 200) {
+          configCallback('Invalid credentials.');
+          return;
+        }
 
-        var request_properties = {
-          hostname: url_parts.hostname,
-          path: url_parts.pathname,
-          method: 'POST',
-          headers: {
-            'Host': url_parts.hostname,
-            'Accept': 'application/json',
-            'Content-Type': 'application/x-www-form-urlencoded;charset=\'utf-8\'',
-            'Referer': xframe_url,
-            'Cache-Control': 'no-cache'
-          }
-        };
+        var all_data = '';
 
-        https.request(request_properties, function(res) {
-          if(res.statusCode != 200) {
-            callback('Invalid credentials.');
-            return;
-          }
+        res.on('data', function(data) {
+          all_data += data;
+        });
 
-          var all_data = '';
+        res.on('end', function() {
+          configCallback();
 
-          res.on('data', function(data) {
-            all_data += data;
-          });
-          
-          res.on('end', function() {
-            callback();
+          var username = credentials.domain + '/' + credentials.username;
+          wincredmgr.WriteCredentials(username, credentials.password, 'LyncStatusPluginCreds');
 
-            var auth = JSON.parse(all_data.toString());
-            authorization = auth.token_type + ' ' + auth.access_token;
-            var expires = auth.expires_in;
-            resolve({auth: authorization, expires: expires});
-          });
-        }).end('grant_type=password&username=' + values.username + '&password=' + values.password);
-      });
-
-      require('open')('http://localhost:' + port);
+          var auth = JSON.parse(all_data.toString());
+          authorization = auth.token_type + ' ' + auth.access_token;
+          resolve();
+        });
+      }).end('grant_type=password&username=' + credentials.username + '&password=' + credentials.password);
     }).then(function(auth) {
       console.log('Authentication successful.');
-      
-      return new Promise(function(resolve, reject) {
-        var fs = require('fs');
-
-        var auth_body = {
-          'auth': auth.auth,
-          'timestamp': Date.now(),
-          'expires': auth.expires
-        };
-
-        fs.writeFile('./auth', JSON.stringify(auth_body));
-
-        resolve(auth.auth);
-      }).then(function(auth) {
-        return getApplicationsURL();
-      }, function(err) {
-        console.error('Error writing auth file: ' + err);
-        return getApplicationsURL();
-      });
+      return getApplicationsURL();
     }, something_went_wrong('authenticate'));
   }
 
   function getApplicationsURL() {
     return new Promise(function(resolve, reject) {
       var url_parts = url.parse(user_url);
-      
+
       var request_properties = {
         hostname: url_parts.hostname,
         path: url_parts.pathname,
@@ -223,7 +204,7 @@ module.exports = function(config, callback) {
           'Cache-Control': 'no-cache'
         }
       };
-      
+
       https.request(request_properties, function(res) {
         if(res.statusCode == 500) {
           return reject(null);
@@ -231,7 +212,7 @@ module.exports = function(config, callback) {
 
         if(res.statusCode != 200)
           return reject(res);
-        
+
         var all_data = '';
 
         res.on('data', function(data) {
@@ -267,7 +248,7 @@ module.exports = function(config, callback) {
       }
 
       try {
-        something_went_wrong('\'user\' resource')(msg);
+        something_went_wrong('"user" resource')(msg);
       } catch(err) {}
 
       callback('Something went wrong.');
@@ -277,7 +258,13 @@ module.exports = function(config, callback) {
   function getUserLinks(applications_url) {
     var url_parts = url.parse(applications_url);
 
-    var body = JSON.stringify(config.application);
+    var application = {
+      "UserAgent": "LyncStatusBlu",
+  		"EndpointId": require('uuid').v4(),
+  		"Culture": "en-US"
+    };
+
+    var body = JSON.stringify(application);
 
     var request_properties = {
       hostname: url_parts.hostname,
@@ -313,7 +300,7 @@ module.exports = function(config, callback) {
           makeMeAvailable({host: url_parts.hostname, application: application, makeMeAvailable: makeMeAvailable_href});
         }
         else {
-          callback(null, new lync_user(url_parts.hostname, xframe_url, authorization, links));
+          callback(null, new lync_user(url_parts.hostname, xframe_url, authorization, links._embedded.me));
         }
       });
     });
@@ -377,10 +364,10 @@ module.exports = function(config, callback) {
         res.on('end', function() {
           var links = JSON.parse(all_data.toString());
 
-          callback(null, new lync_user(application_url.host, xframe_url, authorization, links));
+          callback(null, new lync_user(application_url.host, xframe_url, authorization, links._embedded.me));
         });
       }).end();
-    }, something_went_wrong('\'makeMeAvailable\' resource'));
+    }, something_went_wrong('"makeMeAvailable" resource'));
   }
 
   function resetAuth()  {
@@ -390,7 +377,7 @@ module.exports = function(config, callback) {
   function something_went_wrong(info) {
     return function(msg) {
       console.error('Something went wrong with', info);
-      
+
       if(msg.statusCode != undefined) {
         console.error('Status code:', msg.statusCode);
         console.error('Status message:', msg.statusMessage);

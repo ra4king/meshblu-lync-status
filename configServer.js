@@ -1,6 +1,7 @@
 /*
 options: {
   'name': name to be displayed in title and header
+  'status': OPTIONAL, status message to initially show
   'port': OPTIONAL, port to use
   'properties':
     [
@@ -19,7 +20,7 @@ callback: function(values, callback)
     an object with keys as all defined propertyNames along with their values
   callback([error])
     call with no parameters to signal configuration success. The HTTP server is closed
-    call with a string parameter to signal configuration error. The parameter will be shown at the top of the HTML page.
+    call with a string parameter to signal configuration error, shown as the status message
 */
 module.exports = function(options, callback) {
   options = options || {};
@@ -61,7 +62,8 @@ module.exports = function(options, callback) {
     }
 
     if(request.method === 'GET') {
-      var body = populateBody();
+      var body = populateBody(undefined, options.status);
+      delete options.status;
 
       response.writeHead(200, { 'Content-Length': body.length,
                                 'Content-Type': 'text/html' });
@@ -79,7 +81,7 @@ module.exports = function(options, callback) {
           if(err) {
             var body = populateBody(values, err);
             response.writeHead(401, { 'Content-Length': body.length,
-                                    'Content-Type': 'text/html' });
+                                      'Content-Type': 'text/html' });
             response.end(body);
             return;
           }
