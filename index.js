@@ -49,7 +49,7 @@ Plugin.prototype.onMessage = function(message){
       self.lync_user.setLocation(payload.location, function(err) {
         if(err) {
           self.lync_user = undefined;
-          connectToLync();
+          self.connectToLync();
 
           self.emit('message', {
             devices: ['*'],
@@ -76,7 +76,7 @@ Plugin.prototype.onMessage = function(message){
       self.lync_user.setNote(payload.note, function(err) {
         if(err) {
           self.lync_user = undefined;
-          connectToLync();
+          self.connectToLync();
 
           self.emit('message', {
             devices: ['*'],
@@ -108,7 +108,7 @@ Plugin.prototype.onMessage = function(message){
           if(err) {
             if(self.lync_user) {
               self.lync_user = undefined;
-              connectToLync();
+              self.connectToLync();
             }
 
             self.emit('message', {
