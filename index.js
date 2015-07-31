@@ -43,7 +43,7 @@ Plugin.prototype.onMessage = function(message){
   if(this.lync_user) {
     var getStatus = true;
 
-    if(payload.location) {
+    if(payload && payload.location) {
       getStatus = false;
 
       self.lync_user.setLocation(payload.location, function(err) {
@@ -70,7 +70,7 @@ Plugin.prototype.onMessage = function(message){
       });
     }
 
-    if(payload.note) {
+    if(payload && payload.note) {
       getStatus = false;
 
       self.lync_user.setNote(payload.note, function(err) {
