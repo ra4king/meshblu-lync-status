@@ -17,12 +17,9 @@ module.exports = function(callback) {
   var configCallback;
 
   function setupConfigServer(message) {
-    var port = 80;
-
     var options = {
       'name': 'Lync Status Plugin',
       'status': message,
-      'port': port,
       'properties': {
         'domain': {
           'name': 'Domain',
@@ -49,7 +46,6 @@ module.exports = function(callback) {
       configCallback = callback;
       lyncDiscover();
     });
-    require('open')('http://localhost:' + port);
   }
 
   try {

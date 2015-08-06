@@ -1,10 +1,16 @@
 'use strict';
 
 /*
+
+Sets up an HTTP server for querying properties from a user. When the server is setup,
+the default browser is automatically opened to the page.
+
 options: {
   'name': name to be displayed in title and header
   'status': OPTIONAL, status message to initially show
-  'port': OPTIONAL, port to use
+  'port': OPTIONAL, port to use. Otherwise port 80 will be attempted. If listening on
+          port fails, it will keep retrying on a different port.
+  'autoopen': OPTIONAL, if true, the default browser is automatically opened. Default true.
   'properties':
     [
       'propertyName': {
@@ -26,6 +32,7 @@ callback: function(values, callback)
 */
 module.exports = function(options, callback) {
   options = options || {};
+  var port = options.port || 80;
 
   function populateBody(values, status) {
     values = values || {};
@@ -99,7 +106,20 @@ module.exports = function(options, callback) {
       });
     }
   });
-  server.listen(options.port || 80, function() {
-    console.log('HTTP server ready');
+
+  function listen(port) {
+    server.listen(port);
+  }
+
+  server.on('error', function(err) {
+    listen(++port);
   });
+
+  server.on('listening', function() {
+    console.log('HTTP server ready');
+    if(options.autoopen || options.autoopen === undefined)
+      require('open')('http://localhost:' + port);
+  });
+
+  listen(port);
 }
